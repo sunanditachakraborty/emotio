@@ -1,4 +1,3 @@
-
 import { Emotion, Message } from "./types";
 import { getRandomBreathing, getRandomGame, getRandomJoke, getRandomMusic, getRandomQuote } from "@/data/activities";
 
@@ -22,7 +21,30 @@ export const detectEmotion = (message: string): Emotion => {
   }
 };
 
+export const getMoodDescription = (emotion: Emotion): string => {
+  switch (emotion) {
+    case "anxious":
+      return "You seem to be feeling anxious right now";
+    case "stressed":
+      return "I'm detecting that you're feeling stressed";
+    case "sad":
+      return "It sounds like you're feeling sad";
+    case "burned-out":
+      return "I notice you're experiencing burnout";
+    case "overwhelmed":
+      return "You appear to be feeling overwhelmed";
+    case "happy":
+      return "I can tell you're feeling happy";
+    case "neutral":
+      return "Your mood seems balanced right now";
+    default:
+      return "I'm not quite sure how you're feeling";
+  }
+};
+
 export const generateResponse = (message: string, emotion: Emotion): string => {
+  const moodIdentification = getMoodDescription(emotion);
+  
   const empathyResponses = {
     "anxious": [
       "I can hear that anxiety in your voice. It's like your mind is racing with 'what-ifs', isn't it?",
@@ -102,7 +124,7 @@ export const generateResponse = (message: string, emotion: Emotion): string => {
   const empathyResponse = empathyResponses[emotion][Math.floor(Math.random() * empathyResponses[emotion].length)];
   const suggestion = suggestions[emotion][Math.floor(Math.random() * suggestions[emotion].length)];
 
-  return `${empathyResponse}\n\n${suggestion}\n\n👉 Want to try a fun distraction or talk more about it?`;
+  return `**${moodIdentification}.** \n\n${empathyResponse}\n\n${suggestion}\n\n👉 Want to try a fun distraction or talk more about it?`;
 };
 
 export const generateBreakResponse = (): string => {

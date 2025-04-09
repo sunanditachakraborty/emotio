@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Message, Emotion } from "@/lib/types";
@@ -13,7 +12,8 @@ import BadgeCollection from "@/components/BadgeCollection";
 import NewBadgeModal from "@/components/NewBadgeModal";
 import { 
   createMessage, 
-  detectEmotion, 
+  detectEmotion,
+  getMoodDescription,
   generateResponse, 
   generateBreakResponse, 
   generateFullBreakKit, 
@@ -31,7 +31,6 @@ const Index = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Initialize with a welcome message
   useEffect(() => {
     const initialMessage = createMessage(
       "Hi there! I'm RoboMood, your emotional support buddy. 🤖💙\n\nHow are you feeling today? You can share anything that's on your mind, and I'll be here to listen and help boost your mood.\n\n👉 Want to try a fun distraction or talk more about your feelings?",
@@ -40,17 +39,14 @@ const Index = () => {
     setMessages([initialMessage]);
   }, []);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Check for badge unlocks
   useEffect(() => {
     const currentBadge = getCurrentBadge(xp);
     const previousBadge = xp > 0 ? getCurrentBadge(xp - 1) : null;
     
-    // If we've earned a new badge (current badge is different from what we had at previous XP)
     if (previousBadge && currentBadge.id !== previousBadge.id) {
       setNewBadge(currentBadge);
       setShowNewBadgeModal(true);
@@ -61,11 +57,9 @@ const Index = () => {
     const userMessage = createMessage(content, true);
     setMessages(prev => [...prev, userMessage]);
     
-    // Detect emotion
     const emotion = detectEmotion(content);
     setCurrentEmotion(emotion);
     
-    // Add XP for opening up
     if (content.length > 20) {
       addXP(10);
       toast({
@@ -74,7 +68,6 @@ const Index = () => {
       });
     }
     
-    // Generate response
     setTimeout(() => {
       const botMessage = createMessage(generateResponse(content, emotion), false);
       setMessages(prev => [...prev, botMessage]);
