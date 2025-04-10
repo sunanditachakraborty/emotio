@@ -28,6 +28,7 @@ const Index = () => {
   const [currentEmotion, setCurrentEmotion] = useState<Emotion>("neutral");
   const [newBadge, setNewBadge] = useState<ReturnType<typeof getCurrentBadge> | null>(null);
   const [showNewBadgeModal, setShowNewBadgeModal] = useState<boolean>(false);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -53,7 +54,7 @@ const Index = () => {
     }
   }, [xp]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const userMessage = createMessage(content, true);
     setMessages(prev => [...prev, userMessage]);
     
@@ -68,10 +69,22 @@ const Index = () => {
       });
     }
     
-    setTimeout(() => {
-      const botMessage = createMessage(generateResponse(content, emotion), false);
+    setIsTyping(true);
+    
+    try {
+      const response = await generateResponse(content, emotion);
+      const botMessage = createMessage(response, false);
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error generating response:", error);
+      const errorMessage = createMessage(
+        "I'm having some trouble connecting right now. Could we try again in a moment?", 
+        false
+      );
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleActivitySelect = (activity: string) => {
@@ -171,6 +184,18 @@ const Index = () => {
               {messages.map((msg) => (
                 <ChatBubble key={msg.id} message={msg} />
               ))}
+              {isTyping && (
+                <div className="flex justify-start mb-4">
+                  <div className="mr-2 flex-shrink-0">
+                    <RobotAvatar emotion="neutral" size="sm" />
+                  </div>
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
             
@@ -180,7 +205,7 @@ const Index = () => {
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-sm p-4">
-                <ChatInput onSendMessage={handleSendMessage} disabled={showBreakOptions} />
+                <ChatInput onSendMessage={handleSendMessage} disabled={isTyping || showBreakOptions} />
               </div>
             )}
           </TabsContent>

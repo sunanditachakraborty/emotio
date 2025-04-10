@@ -1,5 +1,6 @@
 import { Emotion, Message } from "./types";
 import { getRandomBreathing, getRandomGame, getRandomJoke, getRandomMusic, getRandomQuote } from "@/data/activities";
+import { sendMessageToLyzr } from "./lyzrService";
 
 export const detectEmotion = (message: string): Emotion => {
   const message_lower = message.toLowerCase();
@@ -42,7 +43,64 @@ export const getMoodDescription = (emotion: Emotion): string => {
   }
 };
 
-export const generateResponse = (message: string, emotion: Emotion): string => {
+export const generateResponse = async (message: string, emotion: Emotion): Promise<string> => {
+  try {
+    const lyzrResponse = await sendMessageToLyzr(message);
+    
+    if (lyzrResponse.message && lyzrResponse.message.trim().length > 0) {
+      const moodIdentification = getMoodDescription(emotion);
+      
+      const suggestions = {
+        "anxious": [
+          `Let's try a quick breathing exercise: ${getRandomBreathing()}`,
+          `When anxiety strikes, grounding can help. Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste.`,
+          `Sometimes a bit of distraction helps with anxiety. ${getRandomGame()}`
+        ],
+        "stressed": [
+          `Music can be a great stress reliever. ${getRandomMusic()}`,
+          `A quick laugh can reduce stress hormones. Here's a joke: ${getRandomJoke()}`,
+          `Try progressive muscle relaxation: Tense each muscle group for 5 seconds, then release for 10 seconds, starting with your feet and moving up to your head.`
+        ],
+        "sad": [
+          `When you're feeling down, sometimes an inspiring quote can offer a new perspective: ${getRandomQuote()}`,
+          `Gentle movement can help shift sadness. Could you try stretching your arms up high, then out to the sides?`,
+          `Music has a special way of connecting with our emotions. ${getRandomMusic()}`
+        ],
+        "burned-out": [
+          `Burnout requires real rest. Could you take 5 minutes to just close your eyes and do absolutely nothing?`,
+          `When you're burned out, nature can be restorative. Could you look out a window or step outside for a moment?`,
+          `Burnout often means you need to refill your cup. ${getRandomQuote()}`
+        ],
+        "overwhelmed": [
+          `When everything feels like too much, let's bring it back to just one thing. What's one small task you could focus on right now?`,
+          `Try the "brain dump" technique - grab paper and write down everything swirling in your mind without organization or judgment.`,
+          `When overwhelmed, our breathing often gets shallow. ${getRandomBreathing()}`
+        ],
+        "happy": [
+          `That's wonderful! Savoring positive emotions helps them last longer. Can you take a mental photograph of this moment to revisit later?`,
+          `Happiness is worth celebrating! Maybe add a little joy-boosting music? ${getRandomMusic()}`,
+          `Positive emotions are great fuel! Maybe channel that energy into something creative or fun? ${getRandomGame()}`
+        ],
+        "neutral": [
+          `If you'd like a mood boost, sometimes a good laugh helps. ${getRandomJoke()}`,
+          `If you're looking for something to shift your energy, music can be powerful. ${getRandomMusic()}`,
+          `Sometimes taking a moment to reflect helps. ${getRandomQuote()}`
+        ]
+      };
+      
+      const suggestion = suggestions[emotion][Math.floor(Math.random() * suggestions[emotion].length)];
+      
+      return `**${moodIdentification}.** \n\n${lyzrResponse.message}\n\n${suggestion}\n\n👉 Want to try a fun distraction or talk more about it?`;
+    } else {
+      return generateLocalResponse(message, emotion);
+    }
+  } catch (error) {
+    console.error("Error generating response with Lyzr:", error);
+    return generateLocalResponse(message, emotion);
+  }
+};
+
+export const generateLocalResponse = (message: string, emotion: Emotion): string => {
   const moodIdentification = getMoodDescription(emotion);
   
   const empathyResponses = {
